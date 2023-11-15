@@ -71,7 +71,7 @@ export class BookingDialog extends ComponentDialog {
         const bookingDetails = stepContext.options as BookingDetails;
         bookingDetails.name = stepContext.result;
         const promptOptions = { prompt: 'Please enter your address.' };
-        return await stepContext.prompt(NUMBER_PROMPT, promptOptions);
+        return await stepContext.prompt(TEXT_PROMPT, promptOptions);
     }
 
    
@@ -80,7 +80,7 @@ export class BookingDialog extends ComponentDialog {
         const bookingDetails = stepContext.options as BookingDetails;
         bookingDetails.address = stepContext.result;
     
-        const messageText = `Please confirm, I have you this info ${bookingDetails.age}, ${ bookingDetails.name }, ${ bookingDetails.address }. Is this correct?`;
+        const messageText = `Please confirm, I have you this info ${bookingDetails.age}. Is this correct?`;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
 
         // Offer a YES/NO prompt.
@@ -90,9 +90,12 @@ export class BookingDialog extends ComponentDialog {
 
     // summary
     async summaryStep(stepContext) {
-        console.log('stepcontext', stepContext)
+        console.log('stepcontext', stepContext.options)
         if(stepContext.result){
-            const bookingDetails = stepContext.values as BookingDetails;                               
+            const bookingDetails = stepContext.options;       
+            const messageText = `Booking completed with ${bookingDetails.age} ${bookingDetails.name} ${bookingDetails.address}`;
+            return await stepContext.prompt(CONFIRM_PROMPT, { prompt: messageText });    
+
         }
     }
 
