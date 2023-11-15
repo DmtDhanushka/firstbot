@@ -4,6 +4,7 @@
 import * as path from 'path';
 
 import { config } from 'dotenv';
+// Note: Ensure you have a .env file and include LuisAppId, LuisAPIKey and LuisAPIHostName.
 const ENV_FILE = path.join(__dirname, '..', '.env');
 config({ path: ENV_FILE });
 
@@ -15,32 +16,23 @@ import { INodeSocket } from 'botframework-streaming';
 // See https://aka.ms/bot-services to learn more about the different parts of a bot.
 import {
     CloudAdapter,
-    ConfigurationServiceClientCredentialFactory,
-    createBotFrameworkAuthenticationFromConfiguration
+    ConfigurationBotFrameworkAuthentication,
+    ConfigurationBotFrameworkAuthenticationOptions,
+    ConversationState,
+    MemoryStorage,
+    UserState
 } from 'botbuilder';
 
-// This bot's main dialog.
-import { EchoBot } from './bot';
+// The bot and its main dialog.
+import { DialogAndWelcomeBot } from './bots/dialogAndWelcomeBot';
+import { MainDialog } from './dialogs/mainDialog';
+
+// The bot's booking dialog
+import { BookingDialog } from './dialogs/bookingDialog';
+const BOOKING_DIALOG = 'bookingDialog';
 
 
-// Create HTTP server.
-const server = restify.createServer();
-server.use(restify.plugins.bodyParser());
-
-server.listen(process.env.port || process.env.PORT || 3978, () => {
-    console.log(`\n${server.name} listening to ${server.url}`);
-    console.log('\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator');
-    console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
-});
-
-const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
-    MicrosoftAppId: process.env.MicrosoftAppId,
-    MicrosoftAppPassword: process.env.MicrosoftAppPassword,
-    MicrosoftAppType: process.env.MicrosoftAppType,
-    MicrosoftAppTenantId: process.env.MicrosoftAppTenantId
-});
-
-const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
+const botFrameworkAuthentication = new ConfigurationBotFrameworkAuthentication(process.env as ConfigurationBotFrameworkAuthenticationOptions);
 
 // Create adapter.
 // See https://aka.ms/about-bot-adapter to learn more about adapters.
@@ -64,18 +56,47 @@ const onTurnErrorHandler = async (context, error) => {
     // Send a message to the user
     await context.sendActivity('The bot encountered an error or bug.');
     await context.sendActivity('To continue to run this bot, please fix the bot source code.');
+    // Clear out state
+    await conversationState.delete(context);
 };
 
 // Set the onTurnError for the singleton CloudAdapter.
 adapter.onTurnError = onTurnErrorHandler;
 
-// Create the main dialog.
-const myBot = new EchoBot();
+// Define a state store for your bot. See https://aka.ms/about-bot-state to learn more about using MemoryStorage.
+// A bot requires a state store to persist the dialog and user state between messages.
+let conversationState: ConversationState;
+let userState: UserState;
 
-// Listen for incoming requests.
+// For local development, in-memory storage is used.
+// CAUTION: The Memory Storage used here is for local bot debugging only. When the bot
+// is restarted, anything stored in memory will be gone.
+const memoryStorage = new MemoryStorage();
+conversationState = new ConversationState(memoryStorage);
+userState = new UserState(memoryStorage);
+
+// If configured, pass in the FlightBookingRecognizer. (Defining it externally allows it to be mocked for tests)
+
+
+// Create the main dialog.
+const bookingDialog = new BookingDialog();
+const dialog = new MainDialog(bookingDialog);
+const bot = new DialogAndWelcomeBot(conversationState, userState, dialog);
+
+// Create HTTP server
+const server = restify.createServer();
+server.use(restify.plugins.bodyParser());
+
+server.listen(process.env.port || process.env.PORT || 3978, () => {
+    console.log(`\n${ server.name } listening to ${ server.url }`);
+    console.log('\nGet Bot Framework Emulator: https://aka.ms/botframework-emulator');
+    console.log('\nTo talk to your bot, open the emulator select "Open Bot"');
+});
+
+// Listen for incoming activities and route them to your bot main dialog.
 server.post('/api/messages', async (req, res) => {
     // Route received a request to adapter for processing
-    await adapter.process(req, res, (context) => myBot.run(context));
+    await adapter.process(req, res, (context) => bot.run(context));
 });
 
 // Listen for Upgrade requests for Streaming.
@@ -86,5 +107,5 @@ server.on('upgrade', async (req, socket, head) => {
     // Set onTurnError for the CloudAdapter created for each connection.
     streamingAdapter.onTurnError = onTurnErrorHandler;
 
-    await streamingAdapter.process(req, socket as unknown as INodeSocket, head, (context) => myBot.run(context));
+    await streamingAdapter.process(req, socket as unknown as INodeSocket, head, (context) => bot.run(context));
 });

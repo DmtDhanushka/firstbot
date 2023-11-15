@@ -23,7 +23,7 @@ export class EchoBot extends ActivityHandler {
 
     async sendWelcomeMessage(context: TurnContext) {
         const membersAdded = context.activity.membersAdded;
-        const welcomeText = 'Hey there!';
+        const welcomeText = 'Welcome to Azure Flight!';
         for (const member of membersAdded) {
             if (member.id !== context.activity.recipient.id) {
                 await context.sendActivity(MessageFactory.text(welcomeText, welcomeText));
@@ -33,7 +33,7 @@ export class EchoBot extends ActivityHandler {
     }
 
     async sendSuggestedActions(turnContext) {
-        const cardActions = ['Book reservation', 'know more info'];
+        const cardActions = ['Book flight', 'Check weather', 'Help'];
         var reply = MessageFactory.suggestedActions(cardActions, 'How can I help you?');
         await turnContext.sendActivity(reply);
     }
