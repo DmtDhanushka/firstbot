@@ -3,7 +3,7 @@
 import { TimexProperty } from '@microsoft/recognizers-text-data-types-timex-expression';
 import { BookingDetails } from './bookingDetails';
 
-import { InputHints, MessageFactory, StatePropertyAccessor, TurnContext } from 'botbuilder';
+import { CardFactory, InputHints, MessageFactory, StatePropertyAccessor, TurnContext } from 'botbuilder';
 
 import {
     ChoiceFactory,
@@ -17,6 +17,7 @@ import {
     WaterfallStepContext
 } from 'botbuilder-dialogs';
 import { BookingDialog } from './bookingDialog';
+import { WeatherDialog } from './weatherDialog';
 
 
 const moment = require('moment');
@@ -36,6 +37,7 @@ export class MainDialog extends ComponentDialog {
         // this.addDialog(new TextPrompt('TextPrompt'));
         this.addDialog(new ChoicePrompt(CHOICE_PROMPT));
         this.addDialog(bookingDialog);
+        this.addDialog(new WeatherDialog())
 
         this.addDialog(new WaterfallDialog(MAIN_WATERFALL_DIALOG, [
             this.menuStep.bind(this),
@@ -88,7 +90,9 @@ export class MainDialog extends ComponentDialog {
                 return await stepContext.beginDialog('bookingDialog', bookingDetails);
                 break;
             case 'Weather info':
-                await stepContext.context.sendActivity('Weather info');
+                return await stepContext.beginDialog('weatherDialog');
+
+                // await stepContext.context.sendActivity('Weather info');
                 break;
             case 'Help':
                 await stepContext.context.sendActivity('Help');
@@ -96,27 +100,33 @@ export class MainDialog extends ComponentDialog {
         return await stepContext.next();
     }
 
-    
+
     /**
      * This is the final step in the main waterfall dialog.
      * It wraps up the sample "book a flight" interaction with a simple confirmation.
      */
     private async finalStep(stepContext: WaterfallStepContext): Promise<DialogTurnResult> {
         // If the child dialog ("bookingDialog") was cancelled or the user failed to confirm, the Result here will be null.
-        // console.log('stepcontext.results', stepContext.result)
-        // if (stepContext.result) {
-        //     const result = stepContext.result as BookingDetails;
-        //     // Now we have all the booking details.
+        if (stepContext.result) {
+            console.log('main', stepContext.result)
+            // Now we have all the booking details.
 
-        //     // This is where calls to the booking AOU service or database would go.
+            // This is where calls to the booking AOU service or database would go.
 
-        //     // If the call to the booking service was successful tell the user.
-        //     const timeProperty = new TimexProperty(result.travelDate);
-        //     const travelDateMsg = timeProperty.toNaturalLanguage(new Date(Date.now()));
-        //     const msg = `Booking completed: ${result.name} and ${result.address}`
-        //     // const msg = `I have you booked to ${result.destination} from ${result.origin} on ${travelDateMsg}.`;
-        //     await stepContext.context.sendActivity(msg);
-        // }
+            // If the call to the booking service was successful tell the user.
+            // const timeProperty = new TimexProperty(result.travelDate);
+            // const travelDateMsg = timeProperty.toNaturalLanguage(new Date(Date.now()));
+            const bookingDetails = stepContext.result as BookingDetails;
+            const msg = `Booking completed-: ${bookingDetails}`
+            const card = CardFactory.heroCard(
+                `Flight from ${bookingDetails.origin} to ${bookingDetails.destination} on ${bookingDetails.travelDate}`,
+                `Name: ${bookingDetails.name}, ${bookingDetails.age} `
+            );
+            const message = MessageFactory.attachment(card);
+            await stepContext.context.sendActivity(message);
+            // const msg = `I have you booked to ${result.destination} from ${result.origin} on ${travelDateMsg}.`;
+            // await stepContext.context.sendActivity(msg);
+        }
 
         // Restart the main dialog waterfall with a different message the second time around
         return await stepContext.replaceDialog(this.initialDialogId, { restartMsg: 'What else can I do for you?' });

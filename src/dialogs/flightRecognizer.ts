@@ -73,6 +73,9 @@ export class FlightRecognizer extends ComponentDialog {
         // }
 
         const messageText = `${JSON.stringify(cluResponse)} Is this correct? 🤔`;
+        stepContext.options.destination = cluResponse.toCity;
+        stepContext.options.origin = cluResponse.fromCity;
+        stepContext.options.travelDate = cluResponse.date;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
 
         // Offer a YES/NO prompt.
@@ -137,9 +140,9 @@ export class FlightRecognizer extends ComponentDialog {
         // console.log('stepcontext', stepContext.options)
         if (stepContext.result) {
             const bookingDetails = stepContext.options;
-            const messageText = `Booking completed ✅`;
+            const messageText = `Booking completed ✅ with ${JSON.stringify(bookingDetails)}`;
             await stepContext.context.sendActivity(messageText);
-            return await stepContext.endDialog();
+            return await stepContext.endDialog(bookingDetails);
         } else {
             await stepContext.context.sendActivity('Please try again 😕')
             return await stepContext.next();

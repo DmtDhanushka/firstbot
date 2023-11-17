@@ -15,6 +15,7 @@ import {
 } from 'botbuilder-dialogs';
 import { BookingDetails } from './bookingDetails';
 import { FlightRecognizer } from './flightRecognizer';
+import { WeatherDialog } from './weatherDialog';
 
 const BOOKING_DIALOG = 'bookingDialog'
 const FLIGHT_RECOGNIZER = 'flightRecognizer'
@@ -40,7 +41,8 @@ export class BookingDialog extends ComponentDialog {
                 this.nameStep.bind(this),
                 this.addressStep.bind(this),
                 this.confirmStep.bind(this),
-                this.summaryStep.bind(this)
+                this.summaryStep.bind(this),
+                this.finalStep.bind(this)
             ]));
 
         this.initialDialogId = WATERFALL_DIALOG;
@@ -92,9 +94,10 @@ export class BookingDialog extends ComponentDialog {
 
 
     // summary
-    async summaryStep(stepContext) {
+    async summaryStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult> {
         // console.log('stepcontext', stepContext.options)
         if (stepContext.result) {
+            console.log(stepContext.result)
             return await stepContext.beginDialog(FLIGHT_RECOGNIZER);
             // const bookingDetails = stepContext.options;       
             // const messageText = `Booking completed ✅`;
@@ -103,6 +106,16 @@ export class BookingDialog extends ComponentDialog {
         } else {
             await stepContext.context.sendActivity('Please try again 😕')
             return await stepContext.next();
+        }
+    }
+
+    async finalStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult> {
+        if (stepContext.result) {
+            console.log('booking result', stepContext.result)
+            console.log('booking optons', stepContext.options)
+            return await stepContext.endDialog({ ...stepContext.result, ...stepContext.options })
+        } else {
+            return await stepContext.endDialog();
         }
     }
 
