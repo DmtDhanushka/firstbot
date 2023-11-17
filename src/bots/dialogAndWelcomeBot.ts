@@ -15,7 +15,7 @@ export class DialogAndWelcomeBot extends DialogBot {
             const membersAdded = context.activity.membersAdded;
             for (const member of membersAdded) {
                 if (member.id !== context.activity.recipient.id) {
-                    await context.sendActivity('hello');
+                    // await context.sendActivity('hello');
                     await (dialog as MainDialog).run(context, conversationState.createProperty<DialogState>('DialogState'));
                 }
             }

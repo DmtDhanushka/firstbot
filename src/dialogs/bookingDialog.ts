@@ -8,6 +8,7 @@ import {
     ConfirmPrompt,
     DialogTurnResult,
     NumberPrompt,
+    PromptValidatorContext,
     TextPrompt,
     WaterfallDialog,
     WaterfallStepContext
@@ -27,7 +28,7 @@ export class BookingDialog extends ComponentDialog {
         super(BOOKING_DIALOG);
         // this.userProfile = userState.createProperty(USER_PROFILE);
 
-        this.addDialog(new NumberPrompt(NUMBER_PROMPT))
+        this.addDialog(new NumberPrompt(NUMBER_PROMPT, this.agePromptValidator))
             .addDialog(new TextPrompt(TEXT_PROMPT))
             .addDialog(new TextPrompt(TEXT_PROMPT))
             .addDialog(new ConfirmPrompt(CONFIRM_PROMPT))
@@ -44,9 +45,10 @@ export class BookingDialog extends ComponentDialog {
 
     // Age
     async ageStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult>{
-        const bookingDetails = stepContext.options as BookingDetails;
     
-        const promptOptions = { prompt: 'Please enter your age.' };
+        const promptOptions = { 
+            prompt: 'Please enter your age.',  
+            retryPrompt: '⚠️ Age should be greater than 18 and less than 100.' };
         return await stepContext.prompt(NUMBER_PROMPT, promptOptions);
     }
 
@@ -55,15 +57,13 @@ export class BookingDialog extends ComponentDialog {
         const bookingDetails = stepContext.options as BookingDetails;
         bookingDetails.age = stepContext.result;
 
-        // if(stepContext.result < 18){
-        //     await stepContext.context.sendActivity('You must be an adult to make a booking');
-        //     return await stepContext.next();
-        // } else {
-        //     return await stepContext.begin
-        // }
-
-        const promptOptions = { prompt: 'Please enter your name.' };
-        return await stepContext.prompt(TEXT_PROMPT, promptOptions);
+        if(stepContext.result < 18){
+            await stepContext.context.sendActivity('You must be an adult to make a booking, please try again');
+            return await stepContext.endDialog(false);
+        } else {
+            const promptOptions = { prompt: 'Please enter your name.' };
+            return await stepContext.prompt(TEXT_PROMPT, promptOptions);
+        }
     }
 
     // Address
@@ -74,13 +74,12 @@ export class BookingDialog extends ComponentDialog {
         return await stepContext.prompt(TEXT_PROMPT, promptOptions);
     }
 
-   
     // Confirm
     async confirmStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult>{
         const bookingDetails = stepContext.options as BookingDetails;
         bookingDetails.address = stepContext.result;
     
-        const messageText = `Please confirm, I have you this info ${bookingDetails.age}. Is this correct?`;
+        const messageText = `Name:${bookingDetails.name}, Age:${bookingDetails.age}\n and Address:${bookingDetails.address}. Is this correct?`;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
 
         // Offer a YES/NO prompt.
@@ -90,13 +89,21 @@ export class BookingDialog extends ComponentDialog {
 
     // summary
     async summaryStep(stepContext) {
-        console.log('stepcontext', stepContext.options)
+        // console.log('stepcontext', stepContext.options)
         if(stepContext.result){
             const bookingDetails = stepContext.options;       
-            const messageText = `Booking completed with ${bookingDetails.age} ${bookingDetails.name} ${bookingDetails.address}`;
-            return await stepContext.prompt(CONFIRM_PROMPT, { prompt: messageText });    
-
+            const messageText = `Booking completed ✅`;
+            await stepContext.context.sendActivity(messageText);
+            return await stepContext.endDialog();
+        } else{
+            await stepContext.context.sendActivity('Please try again 😕')
+            return await stepContext.next();
         }
+    }
+
+    private async agePromptValidator(promptContext: PromptValidatorContext<number>) {
+        // This condition is our validation rule. You can also change the value at this point.
+        return promptContext.recognized.succeeded && promptContext.recognized.value > 18 && promptContext.recognized.value < 150;
     }
 
 }

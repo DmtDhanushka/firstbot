@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "appServiceName": {
-      "value": ""
+      "value": "botappservice97"
     },
     "existingAppServicePlanName": {
       "value": ""
@@ -12,10 +12,10 @@
       "value": ""
     },
     "newAppServicePlanName": {
-      "value": ""
+      "value": "botappserviceplan97"
     },
     "newAppServicePlanLocation": {
-      "value": ""
+      "value": "eastus"
     },
     "newAppServicePlanSku": {
       "value": {
