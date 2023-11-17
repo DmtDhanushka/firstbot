@@ -14,8 +14,10 @@ import {
     WaterfallStepContext
 } from 'botbuilder-dialogs';
 import { BookingDetails } from './bookingDetails';
+import { FlightRecognizer } from './flightRecognizer';
 
 const BOOKING_DIALOG = 'bookingDialog'
+const FLIGHT_RECOGNIZER = 'flightRecognizer'
 
 const NUMBER_PROMPT = 'NUMBER_PROMPT';
 const TEXT_PROMPT = 'textPrompt';
@@ -23,7 +25,7 @@ const CONFIRM_PROMPT = 'confirmPrompt';
 const WATERFALL_DIALOG = 'waterfallDialog';
 
 export class BookingDialog extends ComponentDialog {
-    
+
     constructor() {
         super(BOOKING_DIALOG);
         // this.userProfile = userState.createProperty(USER_PROFILE);
@@ -32,6 +34,7 @@ export class BookingDialog extends ComponentDialog {
             .addDialog(new TextPrompt(TEXT_PROMPT))
             .addDialog(new TextPrompt(TEXT_PROMPT))
             .addDialog(new ConfirmPrompt(CONFIRM_PROMPT))
+            .addDialog(new FlightRecognizer())
             .addDialog(new WaterfallDialog(WATERFALL_DIALOG, [
                 this.ageStep.bind(this),
                 this.nameStep.bind(this),
@@ -44,20 +47,21 @@ export class BookingDialog extends ComponentDialog {
     }
 
     // Age
-    async ageStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult>{
-    
-        const promptOptions = { 
-            prompt: 'Please enter your age.',  
-            retryPrompt: '⚠️ Age should be greater than 18 and less than 100.' };
+    async ageStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult> {
+
+        const promptOptions = {
+            prompt: 'Please enter your age.',
+            retryPrompt: '⚠️ Age should be greater than 18 and less than 100.'
+        };
         return await stepContext.prompt(NUMBER_PROMPT, promptOptions);
     }
 
     // Name
-    async nameStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult>{
+    async nameStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult> {
         const bookingDetails = stepContext.options as BookingDetails;
         bookingDetails.age = stepContext.result;
 
-        if(stepContext.result < 18){
+        if (stepContext.result < 18) {
             await stepContext.context.sendActivity('You must be an adult to make a booking, please try again');
             return await stepContext.endDialog(false);
         } else {
@@ -67,7 +71,7 @@ export class BookingDialog extends ComponentDialog {
     }
 
     // Address
-    async addressStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult>{
+    async addressStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult> {
         const bookingDetails = stepContext.options as BookingDetails;
         bookingDetails.name = stepContext.result;
         const promptOptions = { prompt: 'Please enter your address.' };
@@ -75,27 +79,28 @@ export class BookingDialog extends ComponentDialog {
     }
 
     // Confirm
-    async confirmStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult>{
+    async confirmStep(stepContext: WaterfallStepContext<BookingDetails>): Promise<DialogTurnResult> {
         const bookingDetails = stepContext.options as BookingDetails;
         bookingDetails.address = stepContext.result;
-    
+
         const messageText = `Name:${bookingDetails.name}, Age:${bookingDetails.age}\n and Address:${bookingDetails.address}. Is this correct?`;
         const msg = MessageFactory.text(messageText, messageText, InputHints.ExpectingInput);
 
         // Offer a YES/NO prompt.
-        return await stepContext.prompt(CONFIRM_PROMPT, { prompt: msg });    
+        return await stepContext.prompt(CONFIRM_PROMPT, { prompt: msg });
     }
 
 
     // summary
     async summaryStep(stepContext) {
         // console.log('stepcontext', stepContext.options)
-        if(stepContext.result){
-            const bookingDetails = stepContext.options;       
-            const messageText = `Booking completed ✅`;
-            await stepContext.context.sendActivity(messageText);
-            return await stepContext.endDialog();
-        } else{
+        if (stepContext.result) {
+            return await stepContext.beginDialog(FLIGHT_RECOGNIZER);
+            // const bookingDetails = stepContext.options;       
+            // const messageText = `Booking completed ✅`;
+            // await stepContext.context.sendActivity(messageText);
+            // return await stepContext.endDialog();
+        } else {
             await stepContext.context.sendActivity('Please try again 😕')
             return await stepContext.next();
         }

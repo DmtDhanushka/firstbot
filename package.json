@@ -38,6 +38,7 @@
     },
     "dependencies": {
         "@microsoft/recognizers-text-data-types-timex-expression": "1.1.4",
+        "axios": "^1.6.2",
         "botbuilder": "~4.21.0",
         "botbuilder-dialogs": "~4.21.0",
         "botbuilder-testing": "~4.21.0",
