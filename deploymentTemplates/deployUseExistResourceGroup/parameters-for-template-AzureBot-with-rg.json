@@ -3,10 +3,10 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "azureBotId": {
-      "value": ""
+      "value": "flightbot97"
     },
     "azureBotSku": {
-      "value": "S1"
+      "value": "F0"
     },
     "azureBotRegion": {
       "value": "global"
@@ -15,19 +15,19 @@
       "value": ""
     },
     "appType": {
-      "value": "MultiTenant"
+      "value": "UserAssignedMSI"
     },
     "appId": {
-      "value": ""
+      "value": "30effe37-7ee1-49c1-b98a-ccac60332b1e"
     },
     "UMSIName": {
-      "value": ""
+      "value": "botidentity"
     },
     "UMSIResourceGroupName": {
-      "value": ""
+      "value": "botgrp1"
     },
     "tenantId": {
-      "value": ""
+      "value": "cf31badf-b9e1-40bd-aac9-1ac8beda0283"
     }
   }
 }

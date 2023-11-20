@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "appServiceName": {
-      "value": "botappservice97"
+      "value": "botappService97"
     },
     "existingAppServicePlanName": {
       "value": ""
@@ -19,30 +19,30 @@
     },
     "newAppServicePlanSku": {
       "value": {
-        "name": "S1",
-        "tier": "Standard",
-        "size": "S1",
-        "family": "S",
+        "name": "F1",
+        "tier": "Free",
+        "size": "F1",
+        "family": "F",
         "capacity": 1
       }
     },
     "appType": {
-      "value": "MultiTenant"
+      "value": "UserAssignedMSI"
     },
     "appId": {
-      "value": ""
+      "value": "30effe37-7ee1-49c1-b98a-ccac60332b1e"
     },
     "appSecret": {
       "value": ""
     },
     "UMSIName": {
-      "value": ""
+      "value": "botidentity"
     },
     "UMSIResourceGroupName": {
-      "value": ""
+      "value": "botgrp1"
     },
     "tenantId": {
-      "value": ""
+      "value": "cf31badf-b9e1-40bd-aac9-1ac8beda0283"
     }
   }
 }
